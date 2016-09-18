@@ -30,7 +30,7 @@ public class SingleUAV {
 
     private ArrayList<Integer> T, S, errors;
 
-    int x = 0;
+    int cycle = 1;
 
     public ArrayList computeCR() {
 
@@ -77,7 +77,7 @@ public class SingleUAV {
 
         errors = new ArrayList<>();
 
-        while (t <= slotNum && x < 15) {
+        while (t <= slotNum) {
             int u = T.get(t);  // target visited at the current time slot
             L[u]  = S.get(t);  // update time of last visit for this time slot
             freq[u]++;
@@ -92,13 +92,18 @@ public class SingleUAV {
 
                 for (int i = 0; i < totalTargets; i++) {
                     if (F[i] != -1 && S.get(t) - L[i] + S.get(F[i]) > RD[i]) {
-                        System.out.println("Target problem: " + i);
+//                        System.out.println("Target problem: " + i);
 
                         int timeSlot = T.subList(0, T.size()-1).lastIndexOf(u);
 
                         T.set(timeSlot, i);  // replace target
-                        u = i;
-                        t = slotNum = timeSlot;
+                        u = i;  // replace currently visited target
+                        t = timeSlot;  // update current time slot
+
+                        // Update total slot number; it must be at least the total number of targets.
+                        slotNum = (timeSlot < totalTargets) ? totalTargets : timeSlot;
+
+                        System.out.println("Time slot " + t + ": " + u);
 
                         // Duplicate the sublist to be removed.
                         for (int j = timeSlot+1; j < T.size(); j++)
@@ -114,14 +119,18 @@ public class SingleUAV {
                             F[k] = T.indexOf(k);
                             L[k] = (T.lastIndexOf(k) == -1) ? 0 : S.get(T.lastIndexOf(k));
 
-                            System.out.println("i: " + k + " First: " + F[k] + " Last: " + L[k]);
+//                            System.out.println("i: " + k + " First: " + F[k] + " Last: " + L[k]);
                         }
                     }
                 }
             }
 
             if (t == slotNum) {
-                if (u == T.get(0) && isAllVisited()) return T;
+                if (u == T.get(0) && isAllVisited()) {
+                    System.out.println(cycle + " cycles.");
+
+                    return T;
+                }
 
                 slotNum++;
             }
@@ -172,7 +181,7 @@ public class SingleUAV {
                 S.add(tmp);
             }
 
-            x++;
+            cycle++;
         }
 
         return T;
