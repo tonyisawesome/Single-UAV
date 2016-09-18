@@ -5,7 +5,7 @@ import java.util.ArrayList;
  */
 public class Main {
     public static void main(String args[]) {
-
+//
         // case 0
 //        System.out.println("Case 0");
 //        int[] ST   = {0, 0, 0};
@@ -13,10 +13,10 @@ public class Main {
 //        int[] RD   = {10, 10, 10};
 
         // case 1
-        System.out.println("Case 1");
-        int[] ST   = {0, 0, 0, 0};
-        int[][] FT = {{0, 5, 9, 5}, {5, 0, 5, 9}, {9, 5, 0, 5}, {5, 9, 5, 0}};
-        int[] RD   = {20, 38, 20, 38};
+//        System.out.println("Case 1");
+//        int[] ST   = {0, 0, 0, 0};
+//        int[][] FT = {{0, 5, 9, 5}, {5, 0, 5, 9}, {9, 5, 0, 5}, {5, 9, 5, 0}};
+//        int[] RD   = {20, 38, 20, 38};
 
         // case 2
 //        System.out.println("Case 2");
@@ -49,10 +49,10 @@ public class Main {
 //        int[] RD   = {1490, 1490, 1490, 1490};
 
         // case 7
-//        System.out.println("Case 7");
-//        int[] ST   = {0, 0, 0, 0};
-//        int[][] FT = {{0, 5, 7, 11}, {5, 0, 3, 6}, {7, 3, 0, 6}, {11, 6, 6, 0}};
-//        int[] RD   = {25, 26, 27, 27};
+        System.out.println("Case 7");
+        int[] ST   = {0, 0, 0, 0};
+        int[][] FT = {{0, 5, 7, 11}, {5, 0, 3, 6}, {7, 3, 0, 6}, {11, 6, 6, 0}};
+        int[] RD   = {25, 26, 27, 27};
 
         // case 8
 //        System.out.println("Case 8");
