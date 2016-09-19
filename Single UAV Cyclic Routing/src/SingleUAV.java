@@ -26,9 +26,7 @@ public class SingleUAV {
     private int U[];
     private int freq[];
 
-    private boolean isSAT = false;
-
-    private ArrayList<Integer> T, S, errors;
+    private ArrayList<Integer> CR, S, errors;
 
     int cycle = 1;
 
@@ -38,14 +36,15 @@ public class SingleUAV {
         t = 1;
         totalTargets = ST.length;
         slotNum = totalTargets;
-        F = new int[totalTargets];  // keep track of the time slot at which the target is first visited
-        L = new int[totalTargets];  // keep track of the time that the target is last visited
-        U = new int[totalTargets];
-        freq = new int[totalTargets];
+        F = new int[totalTargets];  // keep track of the time at which each target is first visited
+        L = new int[totalTargets];  // keep track of the time at which each target is last visited
+        U = new int[totalTargets];  // keep track of the urgency of each target to meet its RD
+//        freq = new int[totalTargets];
 
         for (int i = 0; i < totalTargets; i++) {
             F[i] = -1;
-            L[i] = freq[i] = 0;
+            L[i] = 0;
+//            freq[i] = 0;
             U[i] = 9999;
 
             // Pre-processing of the input.
@@ -57,79 +56,97 @@ public class SingleUAV {
         }
 
         // Keep track of the target visited at the time slot; the index is the time slot.
-        T = new ArrayList<>();
+        CR = new ArrayList<>();
 
         // First target to be visited.
-        T.add(getNextTarget(RD, -1, -1));
-        F[T.get(0)] = 0;
-        freq[T.get(0)]++;
+        CR.add(getNextTarget(RD, -1, -1));
+        F[CR.get(0)] = 0;
+//        freq[T.get(0)]++;
 
-        System.out.println("Time slot 0: " + T.get(0));
+        System.out.println("Cycle: ~ -> Time slot 0: " + CR.get(0));
 
         // Second target to be visited.
-        T.add(getNextTarget(RD, T.get(0), T.get(0)));
+        CR.add(getNextTarget(RD, CR.get(0), CR.get(0)));
 
         // Keep track of the time which a target was visited at the time slot;
         // the index is the time slot.
         S = new ArrayList<>();
         S.add(0);
-        S.add(FT[T.get(0)][T.get(1)]);
+        S.add(FT[CR.get(0)][CR.get(1)]);
 
         errors = new ArrayList<>();
 
         while (t <= slotNum) {
-            int u = T.get(t);  // target visited at the current time slot
+            int u = CR.get(t);  // target visited at the current time slot
             L[u]  = S.get(t);  // update time of last visit for this time slot
-            freq[u]++;
+//            freq[u]++;
 
-            if (F[u] == -1) F[u] = t;
+            if (F[u] == -1) F[u] = L[u];
 
-            System.out.println("Time slot " + t + ": " + u);
+            System.out.println("Cycle: " + cycle + " -> Time slot " + t + ": " + u);
 
-            // A cycle has been formed (but may not include all targets.)
-            if (u == T.get(0)) {
+            // A cycle has been formed with the first target (may not have visited all targets.)
+            if (u == CR.get(0)) {
                 ArrayList<Integer> tempList = new ArrayList<>();
 
                 for (int i = 0; i < totalTargets; i++) {
-                    if (F[i] != -1 && S.get(t) - L[i] + S.get(F[i]) > RD[i]) {
-//                        System.out.println("Target problem: " + i);
+                    if (F[i] != -1 && S.get(t) - L[i] + F[i] > RD[i]) {
+                        /* Here, we're kind of like reversing time and undoing the "past". */
 
-                        int timeSlot = T.subList(0, T.size()-1).lastIndexOf(u);
-
-                        T.set(timeSlot, i);  // replace target
-                        u = i;  // replace currently visited target
-                        t = timeSlot;  // update current time slot
-
-                        // Update total slot number; it must be at least the total number of targets.
-                        slotNum = (timeSlot < totalTargets) ? totalTargets : timeSlot;
-
-                        System.out.println("Time slot " + t + ": " + u);
+                        // Obtain the time slot at which u is last visited
+                        // apart from the current time slot, and replace it.
+                        t = CR.subList(0, CR.size()-1).lastIndexOf(u);
 
                         // Duplicate the sublist to be removed.
-                        for (int j = timeSlot+1; j < T.size(); j++)
-                            tempList.add(T.get(j));
+                        for (int j = t+1; j < CR.size(); j++)
+                            tempList.add(CR.get(j));
 
-                        T.subList(timeSlot+1, T.size()).clear();  // trim the list
-
-                        // Update time visited at the last modified time slot.
-                        S.set(t, S.get(t-1) + FT[T.get(t-1)][u]);
+                        // Update the cyclic route.
+                        CR.subList(t+1, CR.size()).clear();
+                        CR.set(t, i);  // replace target in the cyclic route
 
                         // Update first and last visits of each target that is removed.
                         for (int k : tempList) {
-                            F[k] = T.indexOf(k);
-                            L[k] = (T.lastIndexOf(k) == -1) ? 0 : S.get(T.lastIndexOf(k));
+                            F[k] = (CR.indexOf(k) == -1) ? -1 : S.get(CR.indexOf(k));
+                            L[k] = (CR.lastIndexOf(k) == -1) ? 0 : S.get(CR.lastIndexOf(k));
 
 //                            System.out.println("i: " + k + " First: " + F[k] + " Last: " + L[k]);
                         }
+
+                        // Update the list of time at which a target is visited.
+                        S.subList(t+1, S.size()).clear();
+
+                        u = i;  // update currently visited target
+
+                        if (t == 0) {
+                            S.set(t, 0);
+
+                            // Obtain second target to be visited
+                            CR.add(getNextTarget(RD, CR.get(0), CR.get(0)));
+                            S.add(FT[CR.get(0)][CR.get(1)]);
+
+                            t = 1;
+                            u = CR.get(t);
+                            L[u] = S.get(t);
+                            F[u] = L[u];
+                        }
+                        else
+                            S.set(t, S.get(t-1) + FT[CR.get(t-1)][i]);
+
+                        // Update slotNum; it must be at least the total number of targets.
+                        slotNum = (t < totalTargets) ? totalTargets : t;
+
+                        System.out.println("Cycle: " + cycle + " -> Time slot " + t + ": " + u);
+                        break;
                     }
                 }
             }
 
             if (t == slotNum) {
-                if (u == T.get(0) && isAllVisited()) {
+                if (u == CR.get(0) && isAllVisited()) {
                     System.out.println(cycle + " cycles.");
 
-                    return T;
+                    return CR;
                 }
 
                 slotNum++;
@@ -141,7 +158,7 @@ public class SingleUAV {
                     U[i] = RD[i] - (S.get(t) - L[i]);
             }
 
-            int v = getNextTarget(U, u, T.get(t-1));
+            int v = getNextTarget(U, u, CR.get(t-1));
 
 //            System.out.println("v: " + v);
 
@@ -153,93 +170,40 @@ public class SingleUAV {
                 U[i] = 9999;  // reset
             }
 
-//            for (int i = 0; i < totalTargets; i++) {
-//                if (tmp - L[i] > RD[i] || (i != v && tmp - L[i] == RD[i])) {
-//                    errors.add(i);
-//                }
-//            }
-
             if (tmp - L[v] > RD[v]) {
                 // does not satisfy again
 
-                if (F[u] == t) F[u] = -1;  // reset
+                if (CR.indexOf(u) == t) F[u] = -1;  // reset
 
-                T.set(t, v);
-                S.set(t, S.get(t-1) + FT[T.get(t-1)][v]);
+                CR.set(t, v);
+                S.set(t, S.get(t-1) + FT[CR.get(t-1)][v]);
                 slotNum--;
 
                 // Update the last visited time of the target that is being replaced.
-                int lastVisit = T.lastIndexOf(u);
+                int lastVisit = CR.lastIndexOf(u);
                 L[u] = (lastVisit != -1) ? S.get(lastVisit) : 0;
 
-                // Update frequency.
-                freq[u]--;
+//                // Update frequency.
+//                freq[u]--;
             }
             else {
                 t++;
-                T.add(v);
+                CR.add(v);
                 S.add(tmp);
             }
 
             cycle++;
         }
 
-        return T;
+        return CR;
     }
 
     private int getNextTarget(int[] array, int curTarget, int prevTarget) {
         ArrayList<Integer> shortestRD = new ArrayList<>();  // targets with shortestRD
         ArrayList<Integer> unvisited  = new ArrayList<>();  // unvisited targets
-        ArrayList<Integer> leastFreq = new ArrayList<>();
         int minRD = 9999;
         int minFT = 9999;
-        int minFreq = 9999;
         int nextTarget = -1;
-
-//        // Obtain min frequency.
-//        for (int i = 0; i < totalTargets; i++)
-//            if (freq[i] <= minFreq) minFreq = freq[i];
-//
-////        System.out.println("Min Freq: " + minFreq);
-//
-//        // Extract targets with min frequency.
-//        for (int i = 0; i < totalTargets; i++) {
-////            System.out.println("i: " + i + " Frequency: " + freq[i]);
-//
-//            if (freq[i] == minFreq) leastFreq.add(i);
-//        }
-//
-////        for (int i : leastFreq) System.out.println("Least Freq: " + i);
-//
-//        if (leastFreq.size() > 1) {
-//            // Obtain min relative deadline.
-//            for (int i : leastFreq)
-//                if (array[i] <= minRD) minRD = array[i];
-//
-////            System.out.println("Min RD: " + minRD);
-//
-//            // Extract targets with min frequency and relative deadline.
-//            for (int i : leastFreq)
-//                if (array[i] == minRD) shortestRD.add(i);
-//
-////            for (int i : shortestRD) System.out.println("Shortest RD: " + i);
-//
-//            if (curTarget == -1) return shortestRD.get(shortestRD.size()-1);
-//
-//            if (shortestRD.size() > 1) {
-//
-//                // Extract a target with shortest flight time.
-//                for (int i = 0; i < shortestRD.size(); i++)
-//                    if (FT[curTarget][shortestRD.get(i)] <= minFT) {
-//                        minFT = FT[curTarget][shortestRD.get(i)];
-//                        nextTarget = shortestRD.get(i);
-//                    }
-//            }
-//            else
-//                nextTarget = shortestRD.get(0);
-//        }
-//        else
-//            nextTarget = leastFreq.get(0);
 
         // Obtain the min relative deadline whereby
         // the target is not currently or previously visited.
