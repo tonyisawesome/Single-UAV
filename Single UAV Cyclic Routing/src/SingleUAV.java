@@ -162,16 +162,16 @@ public class SingleUAV {
 
 //            System.out.println("v: " + v);
 
-            if (v == -1) return null;  // cannot find any other route to take
-
-            int tmp = S.get(t) + FT[u][v];
+//            if (v == -1) return null;  // cannot find any other route to take
 
             for (int i = 0; i < totalTargets; i++) {
                 U[i] = 9999;  // reset
             }
 
+            int tmp = S.get(t) + FT[u][v];
+
             if (tmp - L[v] > RD[v]) {
-                // does not satisfy again
+                // does not satisfy
 
                 if (CR.indexOf(u) == t) F[u] = -1;  // reset
 
@@ -192,10 +192,16 @@ public class SingleUAV {
                 S.add(tmp);
             }
 
+            u = CR.get(t);  // target visited at the current time slot
+            L[u]  = S.get(t);  // update time of last visit for this time slot
+//            freq[u]++;
+
+            if (F[u] == -1) F[u] = L[u];
+
             cycle++;
         }
 
-        return CR;
+        return null;
     }
 
     private int getNextTarget(int[] array, int curTarget, int prevTarget) {
@@ -301,18 +307,6 @@ public class SingleUAV {
             j--;
         }
 
-//        for (int i = 0; i < totalTargets; i++) {
-//            System.out.println("i: " + i + " First Visit: " + firstVisit[i] + " Last Visit: " + lastVisit[i]);
-//        }
-
-//        for (int i = 0; i < totalTargets; i++) {
-//            if (cyclicTime - lastVisit[i] + firstVisit[i] > RD[i]) {
-//                printErrorMessage(route, i);
-//
-//                return;
-//            }
-//        }
-
         boolean isFound = false;
 
         for (int i = 0; i < route.size(); i++) {
@@ -340,11 +334,11 @@ public class SingleUAV {
             isFound = false; // reset
         }
 
-        System.out.println("Route is correct!");
+        System.out.println("Route is valid!");
     }
 
     private void printErrorMessage(int i, int u) {
-        System.out.println("Route is wrong!");
+        System.out.println("Route is invalid!");
         System.out.println("Error @ time slot " + i +
                 " where target = " + u +
                 ", RD = " + RD[u]
