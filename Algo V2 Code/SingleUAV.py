@@ -1,11 +1,16 @@
 # Assumptions:
 # 1. The cycle is always in clockwise direction.
-#    Although in reality it does not matter,
+#    Although in reality it does not matter, as
 #    flight times are symmetrical; undirected graph.
+#
+# 2. Constraints for all vertices only need to be
+#    checked once after the next vertex has been
+#    computed; subsequently, check on violated
+#    vertices only.
 
 RIGHT = 0
 LEFT = 1
-file_name = '1.2'
+file_name = '2.1'
 iterations = 0
 
 
@@ -16,6 +21,7 @@ def main():
     is_solution_found = False
     global iterations
 
+    print_legend()
     print('<< Procedure >>')
 
     while not is_solution_found:
@@ -107,6 +113,7 @@ def main():
                         is_solution_found = True
 
                 if is_solution_found:
+                    print(get_route_str())
                     break
 
     print_solution()
@@ -205,7 +212,6 @@ def get_nxt_right_vertex():
     if len(least_visited) > 1:
         shortest_rd = []
         min_value = relativeDeadlines[least_visited[0]]
-        print(str(least_visited[0]) + ': ' + str(min_value))
 
         for i in range(1, len(least_visited)):
             nxt_vertex = least_visited[i]
@@ -408,6 +414,15 @@ def update_relative_deadlines(nxt_vertex, direction):
                 travel_time += routeTimes[LEFT][len(route[LEFT]) - 1]
 
         relativeDeadlines[vertex] = deadlines[vertex] - travel_time
+
+
+def print_legend():
+    print('[ Legend ]')
+    print('{x} - the pivot, where x is the vertex')
+    print('->  - the next vertex to visit (included in the route)')
+    print('~>  - the next vertex to visit (not yet included in the route)')
+    print('|   - the vertex/vertices which violate(s) the constraint')
+    print()
 
 
 def get_route_str():
