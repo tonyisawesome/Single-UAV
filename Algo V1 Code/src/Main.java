@@ -48,11 +48,17 @@ public class Main {
 //        int[][] FT = {{0, 100,282,424}, {100,0,223,360}, {282,223,0,141}, {424,360,141,0}};
 //        int[] RD   = {1490, 1490, 1490, 1490};
 
-        // case 7
-        System.out.println("Case 7");
-        int[] ST   = {0, 0, 0, 0};
-        int[][] FT = {{0, 5, 7, 11}, {5, 0, 3, 6}, {7, 3, 0, 6}, {11, 6, 6, 0}};
-        int[] RD   = {25, 26, 27, 27};
+        // case 7.1
+//        System.out.println("Case 7.1");
+//        int[] ST   = {0, 0, 0, 0};
+//        int[][] FT = {{0, 5, 7, 11}, {5, 0, 3, 6}, {7, 3, 0, 6}, {11, 6, 6, 0}};
+//        int[] RD   = {25, 26, 27, 27};
+
+        // case 7.2
+//        System.out.println("Case 7.2");
+//        int[] ST   = {0, 0, 0, 0};
+//        int[][] FT = {{0, 5, 7, 11}, {5, 0, 3, 6}, {7, 3, 0, 6}, {11, 6, 6, 0}};
+//        int[] RD   = {25, 25, 25, 25};
 
         // case 8
 //        System.out.println("Case 8");
@@ -67,30 +73,20 @@ public class Main {
 //        int[] RD   = {122, 98, 122, 122, 98};
 
 //        // case 10
-//        System.out.println("Case 10");
-//        int[] ST   = {0, 0, 0, 0};
-//        int[][] FT = {{0, 100,360,424}, {100,0,316,360}, {360,316,0,100}, {424,360,100,0}};
-//        int[] RD   = {1568, 1568, 1568, 1568};
+        System.out.println("Case 10");
+        int[] ST   = {0, 0, 0, 0};
+        int[][] FT = {{0, 100,360,424}, {100,0,316,360}, {360,316,0,100}, {424,360,100,0}};
+        int[] RD   = {1568, 1568, 1568, 1568};
 
-//        for (int i = 0; i < FT.length; i++)
-//            for (int j = 0; j < 4; j++)
-//                System.out.println("FT[" + i + "][" + j + "] = " + FT[i][j]);
+        // case 11
+//        System.out.println("Case 11");
+//        int[] ST   = {0, 0, 0, 0, 0};
+//        int[][] FT = {{0,6,6,17,17}, {6,0,6,17,22}, {6,6,0,12,23}, {17,17,12,0,11}, {17,22,23,11,0}};
+//        int[] RD   = {55, 55, 55, 76, 76};
 
         SingleUAV singleUAV = new SingleUAV(ST, RD, FT);
         ArrayList<Integer> route = singleUAV.computeCR();
 
-        int i;
-
-        if (route != null) {
-            for (i = 0; i < route.size() - 2; i++) {
-                System.out.print(route.get(i) + " -> ");
-            }
-
-            System.out.println(route.get(i));
-
-            singleUAV.checkCR(route);
-        }
-        else
-            System.out.println("No solution found!");
+        singleUAV.printCR(route);
     }
 }

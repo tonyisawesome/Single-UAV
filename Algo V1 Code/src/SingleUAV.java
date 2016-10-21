@@ -60,6 +60,7 @@ public class SingleUAV {
 
         // First target to be visited.
         CR.add(getNextTarget(RD, -1, -1));
+//        CR.add(getFirstTarget());
         F[CR.get(0)] = 0;
 //        freq[T.get(0)]++;
 
@@ -76,7 +77,7 @@ public class SingleUAV {
 
         errors = new ArrayList<>();
 
-        while (t <= slotNum) {
+        while (t <= slotNum && cycle < 15) {
             int u = CR.get(t);  // target visited at the current time slot
             L[u]  = S.get(t);  // update time of last visit for this time slot
 //            freq[u]++;
@@ -202,6 +203,48 @@ public class SingleUAV {
         }
 
         return null;
+    }
+
+    private int getFirstTarget() {
+        int minRD = 9999;
+        int minFT = 9999;
+        ArrayList<Integer> shortestRD = new ArrayList<>();
+        ArrayList<Integer> sumFT = new ArrayList<>();
+
+        // Obtain min relative deadline.
+        for (int i = 0; i < RD.length; i++) {
+            if (RD[i] <= minRD) minRD = RD[i];
+        }
+
+        for (int i = 0; i < RD.length; i++) {
+            if (minRD == RD[i]) shortestRD.add(i);
+        }
+
+        // Initialise sumFT.
+        for (int i = 0; i < shortestRD.size(); i++) {
+            sumFT.add(0);
+        }
+
+        // Obtain sum of FT for each target with shortest RD.
+        for (int i = 0; i < shortestRD.size(); i++) {
+            for (int j = 0; j < totalTargets; j++) {
+                sumFT.set(i, sumFT.get(i)+FT[shortestRD.get(i)][j]);
+            }
+        }
+
+        int firstTarget = -1;
+
+        // Extract target with smallest sum of FT.
+        for (int i = 0; i < sumFT.size(); i++) {
+            if (sumFT.get(i) <= minFT) {
+                minFT = sumFT.get(i);
+                firstTarget = shortestRD.get(i);
+            }
+        }
+
+        System.out.println("First Target: " + firstTarget);
+
+        return firstTarget;
     }
 
     private int getNextTarget(int[] array, int curTarget, int prevTarget) {
@@ -343,5 +386,21 @@ public class SingleUAV {
                 " where target = " + u +
                 ", RD = " + RD[u]
         );
+    }
+
+    public void printCR(ArrayList<Integer> route) {
+        int i;
+
+        if (route != null) {
+            for (i = 0; i < route.size() - 2; i++) {
+                System.out.print(route.get(i) + " -> ");
+            }
+
+            System.out.println(route.get(i));
+
+            checkCR(route);
+        }
+        else
+            System.out.println("No solution found!");
     }
 }
