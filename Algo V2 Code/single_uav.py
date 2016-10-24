@@ -6,11 +6,11 @@
 # 2. Constraints for all vertices only need to be
 #    checked once after the next vertex has been
 #    computed; subsequently, check on violated
-#    vertices only.
+#    vertices only when handling violations.
 
 RIGHT = 0
 LEFT = 1
-file_name = '2.1'
+file_name = '3.2'
 iterations = 0
 
 
@@ -88,7 +88,7 @@ def main():
                 route[direction].append(nxt_vertex)
                 routeTimes[direction].append(new_travel_time)
 
-                # Update nxt_vertex.
+                # Update attributes of nxt_vertex.
                 if firstVisits[direction][nxt_vertex] is not None:
                     lastVisits[direction][nxt_vertex] = new_travel_time
                 else:
@@ -132,7 +132,7 @@ def initialisation():
     deadlines, flightTimes = extract_data()
     relativeDeadlines = []
     totalVertices = len(deadlines)
-    pivot = get_pivot()
+    pivot = prompt_user_pivot()
     numOfVisits = []
 
     for direction in range(2):
@@ -188,59 +188,57 @@ def get_pivot():
 def simple_decision_check():
     for i in range(totalVertices):
         for j in range(totalVertices):
-            if flightTimes[i][j] > 0.5 * relativeDeadlines[i]:
+            if flightTimes[i][j] > 0.5 * deadlines[i]:
                 return False  # no solution can be found
 
     return True  # possible solution can be found, but not guaranteed
 
 
 def get_nxt_right_vertex():
-    # 1. Least visited vertices.
-    least_visited = []
-    min_value = numOfVisits[0]
-    end_vertex = route[RIGHT][len(route[RIGHT]) - 1]
-
-    for num in numOfVisits:
-        if num < min_value:
-            min_value = num
+    # 1. Unvisited vertices.
+    unvisited = []
 
     for vertex in range(totalVertices):
-        if vertex != end_vertex and numOfVisits[vertex] == min_value:
-            least_visited.append(vertex)
+        if numOfVisits[vertex] == 0:
+            unvisited.append(vertex)
 
-    # 2. Shortest relative deadline.
-    if len(least_visited) > 1:
-        shortest_rd = []
-        min_value = relativeDeadlines[least_visited[0]]
+    if unvisited:
+        # 2a. Shortest relative deadline.
+        if len(unvisited) > 1:
+            shortest_rd = []
+            min_value = relativeDeadlines[unvisited[0]]
 
-        for i in range(1, len(least_visited)):
-            nxt_vertex = least_visited[i]
-            # print(str(nxt_vertex) + ': ' + str(relativeDeadlines[nxt_vertex]))
+            for i in range(1, len(unvisited)):
+                nxt_vertex = unvisited[i]
+                # print(str(nxt_vertex) + ': ' + str(relativeDeadlines[nxt_vertex]))
 
-            if relativeDeadlines[nxt_vertex] < min_value:
-                min_value = relativeDeadlines[nxt_vertex]
+                if relativeDeadlines[nxt_vertex] < min_value:
+                    min_value = relativeDeadlines[nxt_vertex]
 
-        for vertex in least_visited:
-            if relativeDeadlines[vertex] == min_value:
-                shortest_rd.append(vertex)
-    else:
-        return least_visited[0]
+            for vertex in unvisited:
+                if relativeDeadlines[vertex] == min_value:
+                    shortest_rd.append(vertex)
+        else:
+            return unvisited[0]
 
-    # 3. Shortest flight time.
-    shortest_ft = shortest_rd[0]
+        # 3a. Shortest flight time.
+        shortest_ft = shortest_rd[0]
 
-    if len(shortest_rd) > 1:
-        cur_vertex = route[RIGHT][len(route[RIGHT]) - 1]
-        min_value = flightTimes[cur_vertex][shortest_rd[0]]
+        if len(shortest_rd) > 1:
+            cur_vertex = route[RIGHT][len(route[RIGHT]) - 1]
+            min_value = flightTimes[cur_vertex][shortest_rd[0]]
 
-        for i in range(1, len(shortest_rd)):
-            nxt_vertex = shortest_rd[i]
+            for i in range(1, len(shortest_rd)):
+                nxt_vertex = shortest_rd[i]
 
-            if flightTimes[cur_vertex][nxt_vertex] <= min_value:
-                min_value = flightTimes[cur_vertex][nxt_vertex]
-                shortest_ft = nxt_vertex
+                if flightTimes[cur_vertex][nxt_vertex] <= min_value:
+                    min_value = flightTimes[cur_vertex][nxt_vertex]
+                    shortest_ft = nxt_vertex
 
-    return shortest_ft
+        return shortest_ft
+
+    # 2b. Right end vertex.
+    return route[LEFT][len(route[LEFT]) - 1]
 
 
 def get_nxt_left_vertex():
@@ -252,6 +250,9 @@ def get_nxt_left_vertex():
             unvisited.append(vertex)
 
     if unvisited:
+        if len(unvisited) == 1:
+            return unvisited[0]
+
         # 2a. Shortest flight time.
         shortest_ft = []
         cur_vertex = route[LEFT][len(route[LEFT]) - 1]
@@ -374,12 +375,14 @@ def handle_violations(violated, nxt_vertex, direction):
 
             return None
 
-    # Remove end_vertex from route and routeTimes.
-    del route[direction][cur_time_slot]
-    del routeTimes[direction][cur_time_slot]
+    if nxt_vertex != route[direction][cur_time_slot - 1]:
+        # Remove end_vertex from route and routeTimes.
+        del route[direction][cur_time_slot]
+        del routeTimes[direction][cur_time_slot]
 
-    # Update end_vertex.
-    update_removed_vertex(end_vertex, direction)
+        # Update end_vertex.
+        update_removed_vertex(end_vertex, direction)
+
     return nxt_vertex
 
 
@@ -392,12 +395,12 @@ def update_removed_vertex(vertex, direction):
         # Last occurrence of replaced_vertex.
         for i in range(cur_time_slot, -1):
             if route[direction][i] == vertex:
-                lastVisits[vertex] = routeTimes[direction][i]
+                lastVisits[direction][vertex] = routeTimes[direction][i]
                 return
 
     firstVisits[direction][vertex] = lastVisits[direction][vertex] = None
 
-    
+
 def update_relative_deadlines(nxt_vertex, direction):
     for vertex in range(totalVertices):
         if vertex == nxt_vertex and direction == RIGHT:
@@ -416,10 +419,19 @@ def update_relative_deadlines(nxt_vertex, direction):
         relativeDeadlines[vertex] = deadlines[vertex] - travel_time
 
 
+def prompt_user_pivot():
+    user_input = input('Use default pivot? (Y/N) ')
+
+    if user_input == 'y' or user_input == 'Y':
+        return get_pivot()
+    else:
+        return int(input('Choose a valid pivot: '))
+
+
 def print_legend():
     print('[ Legend ]')
     print('{x} - the pivot, where x is the vertex')
-    print('->  - the next vertex to visit (included in the route)')
+    print('->  - the next vertex to visit (already included in the route)')
     print('~>  - the next vertex to visit (not yet included in the route)')
     print('|   - the vertex/vertices which violate(s) the constraint')
     print()
