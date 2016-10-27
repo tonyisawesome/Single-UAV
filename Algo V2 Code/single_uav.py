@@ -8,9 +8,10 @@
 #    computed; subsequently, check on violated
 #    vertices only when handling violations.
 
+import re, sys
+
 RIGHT = 0
 LEFT = 1
-file_name = '3.2'
 iterations = 0
 
 
@@ -159,6 +160,8 @@ def initialisation():
 
 def extract_data():
     ft = []
+    global file_name
+    file_name = str(input('Case: '))
 
     with open(file_name, 'r') as file:
         data = [line.split() for line in file]
@@ -339,44 +342,50 @@ def check_constraints(vertex, nxt_vertex, direction):
         return
 
 
-def handle_violations(violated, nxt_vertex, direction):
+def handle_violations(violated_list, nxt_vertex, direction):
     opp_direction = 1 - direction
     cur_time_slot = len(route[direction]) - 1
     cur_opp_time_slot = len(route[opp_direction]) - 1
     end_vertex = route[direction][cur_time_slot]
     opp_end_vertex = route[opp_direction][cur_opp_time_slot]
 
-    if len(violated) == 1:
-        if end_vertex != violated[0] or end_vertex == opp_end_vertex:
-            nxt_vertex = violated[0]
+    if len(violated_list) == 1:
+        if end_vertex != violated_list[0] or end_vertex == opp_end_vertex:
+            nxt_vertex = violated_list[0]
         else:
             removed_vertex = route[opp_direction][cur_opp_time_slot]
 
-            # Replace the opposite end vertex with the violated vertex.
-            route[opp_direction][cur_opp_time_slot] = violated[0]
+            # Replace leaf node of opposite tree with violated vertex.
+            route[opp_direction][cur_opp_time_slot] = violated_list[0]
 
             # Update routeTimes.
             opp_second_end_vertex = route[opp_direction][cur_opp_time_slot - 1]
-            flight_time = flightTimes[opp_second_end_vertex][violated[0]]
+            flight_time = flightTimes[opp_second_end_vertex][violated_list[0]]
             travel_time = routeTimes[opp_direction][cur_opp_time_slot - 1]
             routeTimes[opp_direction][cur_opp_time_slot] = travel_time + flight_time
 
             # Update the opposite end vertex.
-            opp_second_end_vertex = violated[0]
+            opp_end_vertex = route[opp_direction][cur_opp_time_slot]
 
-            if firstVisits[opp_direction][opp_second_end_vertex] is None:
-                firstVisits[opp_direction][opp_second_end_vertex] = routeTimes[opp_direction][cur_opp_time_slot]
+            if firstVisits[opp_direction][opp_end_vertex] is None:
+                firstVisits[opp_direction][opp_end_vertex] = routeTimes[opp_direction][cur_opp_time_slot]
 
-            lastVisits[opp_direction][opp_second_end_vertex] = routeTimes[opp_direction][cur_opp_time_slot]
-            numOfVisits[opp_second_end_vertex] += 1
+            lastVisits[opp_direction][opp_end_vertex] = routeTimes[opp_direction][cur_opp_time_slot]
+            numOfVisits[opp_end_vertex] += 1
 
             # Update firstVisits or/and lastVisits of removed_vertex.
             update_removed_vertex(removed_vertex, opp_direction)
 
             return None
 
+    if len(route[direction]) < 2:
+        print("Error: Pivot cannot be removed!")
+        sys.exit()
+
     if nxt_vertex != route[direction][cur_time_slot - 1]:
-        # Remove end_vertex from route and routeTimes.
+        # Note to self: this is to deal with case 2.1, SP: 3.
+
+        # Remove leaf node from this side of the tree.
         del route[direction][cur_time_slot]
         del routeTimes[direction][cur_time_slot]
 
@@ -392,7 +401,7 @@ def update_removed_vertex(vertex, direction):
     if firstVisits[direction][vertex] is not None:
         cur_time_slot = len(route[direction]) - 1
 
-        # Last occurrence of replaced_vertex.
+        # Last occurrence of vertex.
         for i in range(cur_time_slot, -1):
             if route[direction][i] == vertex:
                 lastVisits[direction][vertex] = routeTimes[direction][i]
@@ -424,12 +433,14 @@ def prompt_user_pivot():
 
     if user_input == 'y' or user_input == 'Y':
         return get_pivot()
+    elif re.match("^[0-9]$", user_input):
+        return int(user_input)
     else:
         return int(input('Choose a valid pivot: '))
 
 
 def print_legend():
-    print('[ Legend ]')
+    print('\n[ Legend ]')
     print('{x} - the pivot, where x is the vertex')
     print('->  - the next vertex to visit (already included in the route)')
     print('~>  - the next vertex to visit (not yet included in the route)')
